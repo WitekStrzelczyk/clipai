@@ -1,0 +1,25 @@
+# Build
+.build/
+build/
+
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+
+# Swift Package Manager
+.swiftpm/
+Package.resolved
+
+# OS
+.DS_Store
+
+# IDE
+*.swp
+*~
+
+# ClipAI specific
+~/clipai/

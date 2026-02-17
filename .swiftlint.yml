@@ -1,0 +1,53 @@
+only_rules:
+  - cyclomatic_complexity
+  - file_length
+  - function_body_length
+  - function_parameter_count
+  - large_tuple
+  - line_length
+  - nesting
+  - type_body_length
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - duplicate_imports
+  - implicitly_unwrapped_optional
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+file_length:
+  warning: 400
+  error: 1000
+
+function_body_length:
+  warning: 50
+  error: 100
+
+function_parameter_count:
+  warning: 5
+  error: 8
+
+large_tuple:
+  warning: 2
+  error: 3
+
+line_length:
+  warning: 120
+  error: 200
+
+nesting:
+  type_level:
+    warning: 1
+  function_level:
+    warning: 2
+
+type_body_length:
+  warning: 250
+  error: 350
+
+included:
+  - Sources/
+  - Tests/
+  - Package.swift
