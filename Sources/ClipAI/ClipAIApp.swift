@@ -80,6 +80,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var browserURLExtractor: BrowserURLExtractor?
     private var overlayWindowController: OverlayWindowController?
+    private var globalShortcutManager: GlobalShortcutManager?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         logInfo("=== ClipAI Starting Up ===")
@@ -95,20 +96,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         logInfo("Status bar item created")
 
-        // Initialize overlay window controller
-        overlayWindowController = OverlayWindowController()
-        logInfo("Overlay window controller initialized")
-
         // Set up storage directory (hidden directory)
         let storageDirectory = FileManager.default
             .homeDirectoryForCurrentUser
             .appendingPathComponent(".clipai")
 
-        logInfo("Storage directory: \(storageDirectory.path)")
-        logger.info("Storage directory: \(storageDirectory.path)")
-
-        // Initialize storage
+        // Initialize storage first
         clipStorage = ClipStorage(storageDirectory: storageDirectory)
+
+        // Initialize overlay window controller with storage
+        overlayWindowController = OverlayWindowController(storage: clipStorage)
+        logInfo("Overlay window controller initialized")
+
+        // Initialize global shortcut manager (Cmd+Shift+V)
+        globalShortcutManager = GlobalShortcutManager.defaultShortcut { [weak self] in
+            logDebug("Global shortcut Cmd+Shift+V pressed")
+            DispatchQueue.main.async {
+                self?.overlayWindowController?.toggle()
+            }
+        }
+        globalShortcutManager?.start()
+        logInfo("Global shortcut manager started - Cmd+Shift+V to toggle overlay")
 
         // Initialize browser URL extractor and check permissions
         browserURLExtractor = BrowserURLExtractor()
@@ -180,6 +188,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         logInfo("=== ClipAI Shutting Down ===")
         logger.info("ClipAI shutting down")
+
+        // Stop global shortcut manager
+        globalShortcutManager?.stop()
+        logInfo("Global shortcut manager stopped")
+
         Task { [weak self] in
             await self?.clipboardMonitor?.stopMonitoring()
             logInfo("Monitoring stopped")

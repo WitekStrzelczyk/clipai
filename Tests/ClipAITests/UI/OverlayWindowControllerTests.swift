@@ -6,15 +6,28 @@ import XCTest
 @MainActor
 final class OverlayWindowControllerTests: XCTestCase {
     var sut: OverlayWindowController!
+    var testStorage: ClipStorage!
+    var testDirectory: URL!
 
     override func setUp() async throws {
         try await super.setUp()
-        sut = OverlayWindowController()
+        // Create a unique test directory
+        testDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ClipAITests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: testDirectory, withIntermediateDirectories: true)
+        testStorage = ClipStorage(storageDirectory: testDirectory)
+        try await testStorage.loadFromDisk()
+        sut = OverlayWindowController(storage: testStorage)
     }
 
     override func tearDown() async throws {
         sut.close()
         sut = nil
+        // Clean up test directory
+        if let testDirectory = testDirectory {
+            try? FileManager.default.removeItem(at: testDirectory)
+        }
+        testStorage = nil
         try await super.tearDown()
     }
 
@@ -38,13 +51,15 @@ final class OverlayWindowControllerTests: XCTestCase {
         XCTAssertEqual(windowFrame.height, expectedSize.height, accuracy: 1.0, "Window height should be ~400")
     }
 
-    func testWindow_whenCreated_isNonActivating() {
-        // Then - NSPanel should be non-activating
+    func testWindow_whenCreated_canBecomeKeyForTextInput() {
+        // Then - NSPanel should become key to allow text input
         guard let panel = sut.window as? NSPanel else {
             XCTFail("Window should be NSPanel")
             return
         }
-        XCTAssertTrue(panel.becomesKeyOnlyIfNeeded, "Panel should be non-activating")
+        // becomesKeyOnlyIfNeeded = false allows the panel to become key
+        // which is required for text field focus and keyboard navigation
+        XCTAssertFalse(panel.becomesKeyOnlyIfNeeded, "Panel should be able to become key for text input")
     }
 
     func testWindow_whenCreated_canBecomeKey() {

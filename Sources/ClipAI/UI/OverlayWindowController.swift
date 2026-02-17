@@ -12,6 +12,9 @@ final class OverlayPanel: NSPanel {
     // Allow panel to become key to receive keyboard events
     override var canBecomeKey: Bool { true }
 
+    // Allow panel to accept first responder for text input
+    override var acceptsFirstResponder: Bool { true }
+
     // Prevent panel from becoming main (doesn't show in window menu)
     override var canBecomeMain: Bool { false }
 
@@ -48,13 +51,23 @@ final class OverlayWindowController: NSWindowController {
     /// Default window size
     private let defaultSize = CGSize(width: 600, height: 400)
 
+    /// The storage service for loading clips
+    private let storage: ClipStorage
+
+    /// The view model for the overlay content
+    private var viewModel: OverlayViewModel!
+
     // MARK: - Initialization
 
-    init() {
-        // Create the panel
+    /// Creates a new OverlayWindowController.
+    /// - Parameter storage: The storage service for loading clips.
+    init(storage: ClipStorage) {
+        self.storage = storage
+
+        // Create the panel with borderless style (no titlebar)
         let panel = OverlayPanel(
             contentRect: NSRect(origin: .zero, size: CGSize(width: 600, height: 400)),
-            styleMask: [.nonactivatingPanel, .titled, .closable, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -63,17 +76,32 @@ final class OverlayWindowController: NSWindowController {
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .transient]
         panel.isFloatingPanel = true
-        panel.becomesKeyOnlyIfNeeded = true
+        panel.becomesKeyOnlyIfNeeded = false // Allow panel to become key for text input
         panel.isMovableByWindowBackground = true
-        panel.titlebarAppearsTransparent = true
-        panel.titleVisibility = .hidden
         panel.backgroundColor = .clear
 
-        // Set SwiftUI content
-        let overlayView = OverlayView()
-        panel.contentView = NSHostingView(rootView: overlayView)
-
         super.init(window: panel)
+
+        // Create view model with storage
+        self.viewModel = OverlayViewModel(storage: storage)
+
+        // Set up paste completion callback to dismiss overlay
+        viewModel.onClipPasted = { [weak self] in
+            DispatchQueue.main.async {
+                self?.hide()
+            }
+        }
+
+        // Set up dismiss callback for ESC key
+        viewModel.onDismiss = { [weak self] in
+            DispatchQueue.main.async {
+                self?.hide()
+            }
+        }
+
+        // Set SwiftUI content
+        let overlayView = OverlayView(viewModel: viewModel)
+        panel.contentView = NSHostingView(rootView: overlayView)
 
         // Set up dismissal callback after super.init
         if let overlayPanel = window as? OverlayPanel {

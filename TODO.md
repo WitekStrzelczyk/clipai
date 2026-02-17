@@ -113,7 +113,7 @@
 
 ## User Stories
 
-### [ ] Story 1: Background Clipboard Monitoring
+### [x] Story 1: Background Clipboard Monitoring
 
 **As a** knowledge worker who switches between applications frequently
 **I want** ClipAI to automatically capture everything I copy to the clipboard
@@ -150,7 +150,7 @@ Verify that clipboard content is captured correctly by checking:
 
 ---
 
-### [ ] Story 2: Menu Bar Icon and Basic Overlay
+### [x] Story 2: Menu Bar Icon and Basic Overlay
 
 **As a** user who wants quick access to clipboard history
 **I want** a menu bar icon that opens a Raycast-style overlay when clicked
@@ -184,7 +184,7 @@ Verify the UI components appear correctly:
 
 ---
 
-### [ ] Story 3: Display Clipboard History List
+### [x] Story 3: Display Clipboard History List
 
 **As a** user who has accumulated clipboard history
 **I want** to see a list of my recent clips sorted by date
@@ -321,7 +321,7 @@ Verify paste functionality works correctly:
 
 ---
 
-### [ ] Story 7: Search Clipboard History
+### [x] Story 7: Search Clipboard History
 
 **As a** user with extensive clipboard history
 **I want** to search through my clips by content
@@ -522,7 +522,7 @@ Verify auto-launch behavior:
 
 ---
 
-### [ ] Story 13: Keyboard Navigation in Overlay
+### [x] Story 13: Keyboard Navigation in Overlay
 
 **As a** keyboard-focused power user
 **I want** to navigate and select clips using only the keyboard
