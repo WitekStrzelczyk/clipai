@@ -16,6 +16,7 @@ struct OverlayView: View {
     @State private var viewModel: OverlayViewModel
     @FocusState private var focusedField: FocusField?
     @State private var hoveredIndex: Int? = nil
+    @State private var isOverDetailsPanel: Bool = false
 
     // MARK: - Initialization
 
@@ -116,7 +117,39 @@ struct OverlayView: View {
         } else if viewModel.filteredClips.isEmpty {
             emptyStateView
         } else {
+            twoColumnLayout
+        }
+    }
+
+    // MARK: - Two-Column Layout (Story 4)
+
+    private var twoColumnLayout: some View {
+        HStack(spacing: 0) {
+            // Left panel: Clip list (~60%)
             clipListView
+                .frame(maxWidth: .infinity)
+
+            // Right panel: Details (~40%)
+            detailsPanel
+        }
+    }
+
+    private var detailsPanel: some View {
+        let hoveredClip = viewModel.getHoveredClip()
+        let displayClip = hoveredClip ?? viewModel.getFocusedClip()
+
+        return ClipDetailsPanel(
+            clip: displayClip,
+            relativeTime: displayClip.map { viewModel.relativeTime(for: $0) } ?? ""
+        )
+        .frame(width: 280)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .onHover { isHovered in
+            isOverDetailsPanel = isHovered
+            // When hovering over details panel, keep the current hovered clip active
+            if isHovered, let currentHovered = viewModel.hoveredClipID {
+                viewModel.setHoveredClip(currentHovered)
+            }
         }
     }
 
@@ -168,7 +201,16 @@ struct OverlayView: View {
                     .focusable()
                     .focusEffectDisabled()
                     .onHover { isHovered in
-                        hoveredIndex = isHovered ? index : nil
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            hoveredIndex = isHovered ? index : nil
+                            // Update viewModel's hoveredClipID for details panel
+                            if isHovered {
+                                viewModel.setHoveredClip(clip.id)
+                            } else if !isOverDetailsPanel {
+                                // Only clear if not hovering over details panel
+                                viewModel.setHoveredClip(nil)
+                            }
+                        }
                     }
                 }
             }

@@ -219,7 +219,7 @@ Verify clips are displayed correctly from stored JSON files:
 
 ---
 
-### [ ] Story 4: View Clip Details in Right Panel
+### [x] Story 4: View Clip Details in Right Panel
 
 **As a** user browsing clipboard history
 **I want** to see full details of a clip when I hover over it
@@ -252,7 +252,7 @@ Verify details panel shows complete information:
 
 ---
 
-### [ ] Story 5: Global Keyboard Shortcut
+### [x] Story 5: Global Keyboard Shortcut
 
 **As a** power user who values speed
 **I want** to invoke ClipAI with a global keyboard shortcut
@@ -286,7 +286,7 @@ Verify keyboard shortcut works globally:
 
 ---
 
-### [ ] Story 6: Select and Paste Clip
+### [x] Story 6: Select and Paste Clip
 
 **As a** user who found the content I need
 **I want** to click a clip and have it automatically pasted

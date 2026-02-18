@@ -62,12 +62,15 @@ clipai/
 ## Quick Commands
 
 ```bash
+./scripts/run-app.sh                  # Build and run the app (use this!)
 swift build                           # Build the project
 swift test                            # Run all tests
 ./scripts/quality-check.sh            # Check changed files
 ./scripts/quality-check.sh --all      # Check all files
 ./scripts/format.sh                   # Format code in-place
 ```
+
+**After implementing changes, always use `./scripts/run-app.sh` to rebuild and test the app.**
 
 ## Dependencies
 

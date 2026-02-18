@@ -13,10 +13,27 @@ brew install swiftlint swift-format
 
 | Command | Description |
 |---------|-------------|
+| `./scripts/run-app.sh` | Build and run the app (stops existing, rebuilds, starts) |
 | `swift build` | Build the project |
 | `swift test` | Run all tests |
 | `./scripts/quality-check.sh` | Check changed files (format, lint, concurrency) |
 | `./scripts/format.sh` | Auto-format changed files |
+
+## Running the App
+
+To build and run the app during development:
+
+```bash
+./scripts/run-app.sh
+```
+
+This script:
+1. Stops any existing ClipAI instance
+2. Builds the project
+3. Starts the app
+4. Shows feature reminders and log location
+
+**Logs:** `tail -f ~/.clipai/clipai.log`
 
 ## Quality Checks
 

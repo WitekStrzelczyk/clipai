@@ -528,6 +528,92 @@ final class OverlayViewModelTests: XCTestCase {
         // Then
         XCTAssertNil(focusedClip)
     }
+
+    // MARK: - Hovered Clip ID (Story 4)
+
+    func testHoveredClipID_WhenInitialized_IsNil() async throws {
+        // Then
+        let hoveredClipID = await sut.hoveredClipID
+        XCTAssertNil(hoveredClipID)
+    }
+
+    func testSetHoveredClip_WhenCalled_SetsHoveredClipID() async throws {
+        // Given
+        let clip = Clip(content: "Test", contentType: .text)
+        await mockStorage.setClips([clip])
+        await sut.loadClips()
+
+        // When
+        await sut.setHoveredClip(clip.id)
+
+        // Then
+        let hoveredClipID = await sut.hoveredClipID
+        XCTAssertEqual(hoveredClipID, clip.id)
+    }
+
+    func testSetHoveredClip_WhenSetToNil_ClearsHoveredClipID() async throws {
+        // Given
+        let clip = Clip(content: "Test", contentType: .text)
+        await mockStorage.setClips([clip])
+        await sut.loadClips()
+        await sut.setHoveredClip(clip.id)
+        // Verify it's set
+        var hoveredClipID = await sut.hoveredClipID
+        XCTAssertEqual(hoveredClipID, clip.id)
+
+        // When
+        await sut.setHoveredClip(nil)
+
+        // Then
+        hoveredClipID = await sut.hoveredClipID
+        XCTAssertNil(hoveredClipID)
+    }
+
+    func testGetHoveredClip_WhenHovered_ReturnsClip() async throws {
+        // Given
+        let clips = [
+            Clip(content: "First", contentType: .text),
+            Clip(content: "Second", contentType: .text)
+        ]
+        await mockStorage.setClips(clips)
+        await sut.loadClips()
+        // Clips are sorted by timestamp descending, so index 0 is "Second"
+        let secondClip = await sut.filteredClips.first { $0.content == "Second" }!
+        await sut.setHoveredClip(secondClip.id)
+
+        // When
+        let hoveredClip = await sut.getHoveredClip()
+
+        // Then
+        XCTAssertEqual(hoveredClip?.content, "Second")
+    }
+
+    func testGetHoveredClip_WhenNotHovered_ReturnsNil() async throws {
+        // Given
+        await mockStorage.setClips([Clip(content: "Test", contentType: .text)])
+        await sut.loadClips()
+        // hoveredClipID is nil
+
+        // When
+        let hoveredClip = await sut.getHoveredClip()
+
+        // Then
+        XCTAssertNil(hoveredClip)
+    }
+
+    func testGetHoveredClip_WhenIDNotInFilteredClips_ReturnsNil() async throws {
+        // Given
+        await mockStorage.setClips([Clip(content: "Test", contentType: .text)])
+        await sut.loadClips()
+        // Set a non-existent ID
+        await sut.setHoveredClip(UUID())
+
+        // When
+        let hoveredClip = await sut.getHoveredClip()
+
+        // Then
+        XCTAssertNil(hoveredClip)
+    }
 }
 
 // MARK: - Mock ClipStorage

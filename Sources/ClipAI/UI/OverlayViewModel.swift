@@ -39,6 +39,9 @@ final class OverlayViewModel {
     /// The index of the currently focused clip item, or nil if search field is focused.
     var focusedIndex: Int?
 
+    /// The ID of the currently hovered clip (for details panel display).
+    var hoveredClipID: UUID?
+
     // MARK: - Computed Properties
 
     /// Clips filtered by search text using two-phase ranking:
@@ -205,6 +208,21 @@ final class OverlayViewModel {
             }
         }
         // If already at search (nil), stay there
+    }
+
+    // MARK: - Hover State (Story 4)
+
+    /// Sets the hovered clip ID for details panel display.
+    /// - Parameter id: The ID of the hovered clip, or nil if no clip is hovered.
+    func setHoveredClip(_ id: UUID?) {
+        hoveredClipID = id
+    }
+
+    /// Gets the currently hovered clip based on hoveredClipID.
+    /// - Returns: The hovered clip, or nil if no clip is hovered or ID is not found.
+    func getHoveredClip() -> Clip? {
+        guard let id = hoveredClipID else { return nil }
+        return filteredClips.first { $0.id == id }
     }
 
     // MARK: - Preview Helpers
