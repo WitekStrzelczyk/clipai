@@ -62,18 +62,24 @@ actor ClipboardMonitor {
     /// Whether accessibility permissions are available for browser URL extraction.
     private var hasAccessibilityPermissions: Bool = false
 
+    /// Optional ignore list manager for filtering apps.
+    private var ignoreListManager: IgnoreListManager?
+
     /// Creates a new ClipboardMonitor instance.
     /// - Parameters:
     ///   - pasteboard: The pasteboard to monitor (defaults to general pasteboard).
     ///   - browserURLExtractor: Optional extractor for browser URLs (defaults to new instance).
+    ///   - ignoreListManager: Optional manager for the app ignore list.
     ///   - onClipCaptured: Callback invoked when a clip is captured.
     init(
         pasteboard: NSPasteboard = .general,
         browserURLExtractor: BrowserURLExtractor? = BrowserURLExtractor(),
+        ignoreListManager: IgnoreListManager? = nil,
         onClipCaptured: @escaping @Sendable (Clip) async -> Void
     ) {
         self.pasteboard = pasteboard
         self.browserURLExtractor = browserURLExtractor
+        self.ignoreListManager = ignoreListManager
         self.onClipCaptured = onClipCaptured
         self.changeCount = pasteboard.changeCount
 
@@ -87,6 +93,13 @@ actor ClipboardMonitor {
         }
 
         monitorLog("ClipboardMonitor initialized with initial changeCount: \(changeCount)")
+    }
+
+    /// Sets or updates the ignore list manager.
+    /// - Parameter manager: The ignore list manager to use.
+    func setIgnoreListManager(_ manager: IgnoreListManager?) {
+        self.ignoreListManager = manager
+        monitorLog("Ignore list manager updated")
     }
 
     /// Starts monitoring the clipboard for changes.
@@ -151,6 +164,15 @@ actor ClipboardMonitor {
 
         monitorLog("CHANGE DETECTED! Old count: \(changeCount), New count: \(currentChangeCount)")
         changeCount = currentChangeCount
+
+        // Check if frontmost app is in ignore list
+        if let frontmostBundleId = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+           let manager = ignoreListManager,
+           await manager.isBundleIdentifierIgnored(frontmostBundleId) {
+            monitorLog("Skipping capture - frontmost app '\(frontmostBundleId)' is in ignore list")
+            logger.debug("Skipping capture - app '\(frontmostBundleId)' is ignored")
+            return
+        }
 
         // Try to capture clip from clipboard
         if let clip = await captureClipFromPasteboard() {

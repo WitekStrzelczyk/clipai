@@ -81,6 +81,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var browserURLExtractor: BrowserURLExtractor?
     private var overlayWindowController: OverlayWindowController?
     private var globalShortcutManager: GlobalShortcutManager?
+    private var ignoreListManager: IgnoreListManager!
+    private var ignoreListWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         logInfo("=== ClipAI Starting Up ===")
@@ -95,6 +97,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
         }
         logInfo("Status bar item created")
+
+        // Build the status bar menu
+        buildStatusBarMenu()
+
+        // Initialize ignore list manager
+        ignoreListManager = IgnoreListManager()
+        logInfo("Ignore list manager initialized")
 
         // Set up storage directory (hidden directory)
         let storageDirectory = FileManager.default
@@ -136,7 +145,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Initialize and start clipboard monitoring
         clipboardMonitor = ClipboardMonitor(
-            browserURLExtractor: browserURLExtractor
+            browserURLExtractor: browserURLExtractor,
+            ignoreListManager: ignoreListManager
         ) { [weak self] clip in
             logInfo("Callback received - new clip captured: \(clip.id)")
             guard let self = self else {
@@ -204,5 +214,76 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func statusBarButtonClicked() {
         logDebug("Status bar button clicked")
         overlayWindowController?.toggle()
+    }
+
+    @objc private func openIgnoreList() {
+        logDebug("Opening ignore list")
+        closeIgnoreListWindow()
+
+        // Activate app before showing window (required for accessory apps)
+        NSApp.activate(ignoringOtherApps: true)
+
+        let view = IgnoreListView(ignoreListManager: ignoreListManager) { [weak self] in
+            self?.closeIgnoreListWindow()
+        }
+
+        let panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 500),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        panel.title = "Privacy Settings"
+        panel.contentView = NSHostingView(rootView: view)
+        panel.center()
+        panel.makeKeyAndOrderFront(nil)
+
+        ignoreListWindow = panel
+    }
+
+    private func closeIgnoreListWindow() {
+        ignoreListWindow?.close()
+        ignoreListWindow = nil
+    }
+
+    // MARK: - Menu Building
+
+    private func buildStatusBarMenu() {
+        guard let statusItem = statusItem else { return }
+
+        let menu = NSMenu()
+
+        // Open overlay
+        let openItem = NSMenuItem(
+            title: "Open ClipAI",
+            action: #selector(statusBarButtonClicked),
+            keyEquivalent: ""
+        )
+        openItem.target = self
+        menu.addItem(openItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Privacy settings
+        let privacyItem = NSMenuItem(
+            title: "Privacy Settings...",
+            action: #selector(openIgnoreList),
+            keyEquivalent: ","
+        )
+        privacyItem.target = self
+        menu.addItem(privacyItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Quit
+        let quitItem = NSMenuItem(
+            title: "Quit ClipAI",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q"
+        )
+        menu.addItem(quitItem)
+
+        statusItem.menu = menu
+        logInfo("Status bar menu created")
     }
 }

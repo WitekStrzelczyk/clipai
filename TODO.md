@@ -356,7 +356,7 @@ Verify search works correctly and performantly:
 
 ---
 
-### [ ] Story 8: Application Ignore List (Privacy)
+### [x] Story 8: Application Ignore List (Privacy)
 
 **As a** security-conscious user
 **I want** to prevent ClipAI from capturing clips from specific applications

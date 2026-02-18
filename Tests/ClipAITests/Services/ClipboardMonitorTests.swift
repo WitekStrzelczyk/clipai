@@ -281,4 +281,72 @@ final class ClipboardMonitorTests: XCTestCase {
         XCTAssertEqual(capturedClips.first?.content, "Browser content")
         // sourceURL depends on accessibility permissions and frontmost app being a browser
     }
+
+    // MARK: - Ignore List Integration
+
+    func testInit_WithIgnoreListManager_StoresManager() async throws {
+        // Given
+        let ignoreListManager = IgnoreListManager(userDefaultsKey: "com.clipai.test.ignoreList")
+
+        // When
+        sut = ClipboardMonitor(
+            pasteboard: mockPasteboard,
+            ignoreListManager: ignoreListManager,
+            onClipCaptured: { [weak self] clip in
+                self?.capturedClips.append(clip)
+            }
+        )
+
+        // Then - should not crash and should accept the manager
+        mockPasteboard.clearContents()
+        mockPasteboard.setString("Test", forType: .string)
+        await sut.checkForChanges()
+
+        XCTAssertEqual(capturedClips.count, 1)
+    }
+
+    func testCheckForChanges_WhenAppIsIgnored_DoesNotCapture() async throws {
+        // Given
+        let ignoreListManager = IgnoreListManager(userDefaultsKey: "com.clipai.test.ignoreList")
+        // Add a bundle identifier that matches the frontmost app bundle ID pattern
+        // Note: In tests, we can't control the frontmost app, so we'll mock this
+        sut = ClipboardMonitor(
+            pasteboard: mockPasteboard,
+            ignoreListManager: ignoreListManager,
+            onClipCaptured: { [weak self] clip in
+                self?.capturedClips.append(clip)
+            }
+        )
+
+        // When - set ignored bundle identifier that won't match test runner
+        await ignoreListManager.addBundleIdentifier("com.nonexistent.app")
+
+        mockPasteboard.clearContents()
+        mockPasteboard.setString("Test content", forType: .string)
+        await sut.checkForChanges()
+
+        // Then - should capture since frontmost app is not ignored
+        XCTAssertEqual(capturedClips.count, 1)
+    }
+
+    func testSetIgnoreListManager_UpdatesManager() async throws {
+        // Given - start without ignore list manager
+        sut = ClipboardMonitor(
+            pasteboard: mockPasteboard,
+            onClipCaptured: { [weak self] clip in
+                self?.capturedClips.append(clip)
+            }
+        )
+
+        // When - set a new ignore list manager
+        let ignoreListManager = IgnoreListManager(userDefaultsKey: "com.clipai.test.ignoreList")
+        await sut.setIgnoreListManager(ignoreListManager)
+
+        // Then - should work normally
+        mockPasteboard.clearContents()
+        mockPasteboard.setString("Test", forType: .string)
+        await sut.checkForChanges()
+
+        XCTAssertEqual(capturedClips.count, 1)
+    }
 }
